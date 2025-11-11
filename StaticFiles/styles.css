@@ -1,0 +1,93 @@
+:root {
+    --accent-color: #6366f1;
+    --background-primary: #0f0f0f;
+    --text-primary: #ffffff;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--background-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Glassmorphism Effect */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Desktop Layout */
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.desktop {
+    flex-grow: 1;
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Window Styling */
+.window {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    width: 500px;
+    min-height: 300px;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.title-bar {
+    padding: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.title-bar-text {
+    font-weight: bold;
+}
+
+.title-bar-controls {
+    display: flex;
+}
+
+.title-bar-controls button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 0.5rem;
+    border: none;
+}
+
+.window-body {
+    padding: 1rem;
+}
+
+/* Taskbar */
+.taskbar {
+    height: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.start-button {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.start-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
