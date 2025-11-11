@@ -1,0 +1,837 @@
+<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" style="height:64px;margin-right:32px"/>
+
+# I need you to leverage your full AI capabilities and advanced expertise to respond with the very same code file, but it must be entirely in copy and paste format. Do not make any unsolicited changes, respond strictly with the requested code only. It must be a single html file. Fact based answers only.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vuduOS - Mobile AI Desktop PWA</title>
+    
+    <!-- PWA Requirements (from manifest.json) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#6366f1"> 
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome (for Icons) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+
+    <style>
+        /* CORE RESET & TYPOGRAPHY */
+        :root {
+            --color-primary: #8a2be2; /* Blue Violet (Theme) */
+            --color-secondary: #00bcd4; /* Cyan (Accent) */
+            --color-text-light: #ffffff;
+            --color-text-dark: #1a1a2e;
+            --glass-blur: 14px;
+            --glass-saturate: 180%;
+            --glass-bg-base: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            --glass-window-bg: rgba(255, 255, 255, 0.15);
+            --glass-taskbar-bg: rgba(255, 255, 255, 0.05);
+            --glass-window-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            --mobile-tap-target: 48px;
+            --taskbar-height: 48px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            color: var(--color-text-light);
+            touch-action: none;
+        }
+
+        /* DESKTOP BACKGROUND */
+        #desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, var(--color-primary) 50%, var(--color-secondary) 100%);
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* TASKBAR/DOCK (Mobile Optimized - Bottom for thumb reach) */
+        #taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 98%;
+            max-width: 700px;
+            height: var(--taskbar-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+            border-radius: 16px 16px 0 0;
+
+            /* GLASSMORPHISM STYLING */
+            background: var(--glass-taskbar-bg);
+            backdrop-filter: blur(calc(var(--glass-blur) * 0.9)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.9)) saturate(var(--glass-saturate));
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            z-index: 1000;
+        }
+
+        .taskbar-section {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Touch-Optimized Icons */
+        .taskbar-icon, #start-button, .system-tray-item {
+            min-width: var(--mobile-tap-target);
+            height: var(--mobile-tap-target);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            font-size: 1.4rem;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .taskbar-icon:hover, #start-button:hover, .system-tray-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(0.95);
+        }
+
+        .system-tray {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            line-height: 1.1;
+        }
+        
+        .api-status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            transition: background-color 0.5s;
+        }
+
+        /* WINDOW STYLES */
+        .vudu-window {
+            position: absolute;
+            min-width: 300px;
+            min-height: 200px;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: default;
+            max-width: 95vw;
+            max-height: calc(100vh - var(--taskbar-height) - 10px);
+            
+            /* GLASSMORPHISM WINDOW */
+            background: var(--glass-window-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-window-shadow);
+            transition: box-shadow 0.2s, transform 0.2s, top 0.3s, left 0.3s, width 0.3s, height 0.3s;
+        }
+
+        .vudu-window.active {
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Maximize State */
+        .vudu-window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100vh - var(--taskbar-height)) !important;
+            border-radius: 0;
+        }
+        
+        /* Minimize State (Hidden but present in DOM) */
+        .vudu-window.minimized {
+            display: none !important;
+        }
+
+        .window-title-bar {
+            height: var(--mobile-tap-target);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            cursor: grab;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .window-title-bar:active { cursor: grabbing; }
+
+        .window-controls button {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: none;
+            margin-left: 8px;
+            cursor: pointer;
+            opacity: 0.9;
+            transition: opacity 0.2s;
+        }
+        .window-controls button:hover { opacity: 1; }
+        .window-controls .close-btn { background-color: #ff5f56; }
+        .window-controls .minimize-btn { background-color: #ffbd2e; }
+        .window-controls .maximize-btn { background-color: #27c93f; }
+
+        .window-content {
+            padding: 15px;
+            height: calc(100% - var(--mobile-tap-target));
+            overflow: auto;
+            /* Adjust padding on small screens */
+            @media (max-width: 600px) {
+                padding: 10px;
+            }
+        }
+
+        /* DESKTOP ICON STYLES (Color and Animation) */
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px;
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+            transition: transform 0.15s ease-out;
+            padding: 8px;
+            border-radius: 8px;
+        }
+        .desktop-icon:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .desktop-icon i {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        
+        /* Individual Icon Colors */
+        .desktop-icon[data-app="file-manager"] i { color: #50fa7b; } 
+        .desktop-icon[data-app="ai-command"] i { color: #8be9fd; animation: glow 2s infinite alternate; }
+        .desktop-icon[data-app="settings"] i { color: #ff79c6; }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #8be9fd, 0 0 10px #8be9fd; }
+            to { text-shadow: 0 0 10px #8be9fd, 0 0 20px #8be9fd; }
+        }
+
+        /* APP DRAWER/START MENU STYLES */
+        #app-drawer {
+            position: fixed;
+            bottom: var(--taskbar-height);
+            left: 1vw;
+            width: 98vw;
+            max-width: 400px;
+            max-height: 80vh;
+            padding: 15px;
+            border-radius: 16px;
+            display: none;
+            flex-wrap: wrap;
+            gap: 10px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-window-shadow);
+            z-index: 999;
+        }
+
+        .drawer-icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            transition: background 0.1s;
+        }
+        .drawer-icon:hover { background: rgba(255, 255, 255, 0.1); }
+        .drawer-icon i { font-size: 2rem; margin-bottom: 5px; }
+
+        /* General App Styles */
+        .file-manager-layout, .ai-chat-area { height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="desktop">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" data-app="file-manager" onclick="vuduOS.openApp('file-manager')">
+            <i class="fas fa-folder-open"></i>
+            <span>File Manager</span>
+        </div>
+        <div class="desktop-icon" data-app="ai-command" onclick="vuduOS.openApp('ai-command')">
+            <i class="fas fa-robot"></i>
+            <span>Cognito AI</span>
+        </div>
+        <div class="desktop-icon" data-app="settings" onclick="vuduOS.openApp('settings')">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </div>
+    </div>
+
+    <!-- App Drawer / Start Menu Modal -->
+    <div id="app-drawer">
+        <!-- Icons populated dynamically by JS from appRegistry -->
+    </div>
+
+    <div id="taskbar">
+        <div class="taskbar-section">
+            <!-- Start Button/App Drawer (FIXED: Calls toggleStartMenu()) -->
+            <button id="start-button" title="App Drawer" onclick="vuduOS.toggleStartMenu()">
+                <i class="fas fa-infinity"></i>
+            </button>
+            <div id="active-apps">
+                <!-- Active App Icons will be injected here by JS -->
+            </div>
+        </div>
+        <div class="system-tray">
+            <div class="system-tray-item" id="api-status-display">
+                <span class="api-status-dot" id="api-status-dot"></span>
+                <span id="api-status-text" style="font-size: 0.75rem;">Checking API...</span>
+            </div>
+            <div class="system-tray-item" id="system-time" style="font-size: 0.9rem;">--:--</div>
+        </div>
+    </div>
+
+    <script>
+        // PWA Service Worker Registration Stub (Ready for real manifest.json)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Placeholder for Service Worker registration logic
+                console.log('PWA Service Worker registration stub ready.');
+            });
+        }
+
+        // ==========================================================
+        // VUDUOS CORE JAVASCRIPT ARCHITECTURE (Vanilla JS Classes)
+        // ==========================================================
+
+        /**
+         * The Window Class: Manages individual application windows (drag, focus, minimize/maximize).
+         */
+        class Window {
+            constructor(id, title, width, height) {
+                this.id = id;
+                this.title = title;
+                this.isDragging = false;
+                this.isMaximized = false;
+                this.isMinimized = false;
+                // Default restore data based on responsive initial size
+                this.restoreData = { 
+                    width: width, 
+                    height: height,
+                    top: (window.innerHeight / 2) - (height / 2) - 30,
+                    left: (window.innerWidth / 2) - (width / 2)
+                };
+                
+                this.element = this.createWindowElement();
+                this.setupEventListeners();
+                document.getElementById('desktop').appendChild(this.element);
+                
+                this.resizeAndPosition(width, height);
+                this.focus();
+            }
+
+            createWindowElement() {
+                const win = document.createElement('div');
+                win.className = 'vudu-window';
+                win.setAttribute('data-id', this.id);
+                win.innerHTML = `
+                    <div class="window-title-bar">
+                        <span class="window-title">${this.title}</span>
+                        <div class="window-controls">
+                            <button class="minimize-btn" title="Minimize"></button>
+                            <button class="maximize-btn" title="Maximize"></button>
+                            <button class="close-btn" title="Close"></button>
+                        </div>
+                    </div>
+                    <div class="window-content" id="content-${this.id}"></div>
+                `;
+                return win;
+            }
+
+            resizeAndPosition(width, height) {
+                // Calculate position for center-screen opening
+                const initialLeft = (window.innerWidth / 2) - (width / 2);
+                const initialTop = (window.innerHeight / 2) - (height / 2) - 30;
+
+                this.element.style.width = `${width}px`;
+                this.element.style.height = `${height}px`;
+                this.element.style.top = `${initialTop}px`;
+                this.element.style.left = `${initialLeft}px`;
+
+                // Set initial restore position
+                this.restoreData.top = initialTop;
+                this.restoreData.left = initialLeft;
+            }
+
+            setupEventListeners() {
+                const titleBar = this.element.querySelector('.window-title-bar');
+                const closeBtn = this.element.querySelector('.close-btn');
+                const minimizeBtn = this.element.querySelector('.minimize-btn');
+                const maximizeBtn = this.element.querySelector('.maximize-btn');
+
+                // Drag and Focus
+                titleBar.addEventListener('mousedown', this.startDrag.bind(this));
+                titleBar.addEventListener('touchstart', this.startDrag.bind(this));
+                this.element.addEventListener('mousedown', this.focus.bind(this));
+                this.element.addEventListener('touchstart', this.focus.bind(this));
+                
+                // FIXED: Controls are now correctly wired
+                closeBtn.addEventListener('click', this.close.bind(this));
+                minimizeBtn.addEventListener('click', this.minimize.bind(this));
+                maximizeBtn.addEventListener('click', this.maximize.bind(this));
+            }
+
+            startDrag(e) {
+                if (this.isMaximized) return;
+                e.preventDefault();
+                this.focus();
+                this.isDragging = true;
+                
+                const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+
+                this.offsetX = clientX - this.element.offsetLeft;
+                this.offsetY = clientY - this.element.offsetTop;
+
+                // Add global event listeners for movement
+                document.addEventListener('mousemove', this.dragHandler = this.drag.bind(this));
+                document.addEventListener('mouseup', this.endDragHandler = this.endDrag.bind(this));
+                document.addEventListener('touchmove', this.dragHandler);
+                document.addEventListener('touchend', this.endDragHandler);
+            }
+
+            drag(e) {
+                if (!this.isDragging || this.isMaximized) return;
+                
+                const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+                const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+
+                let newLeft = clientX - this.offsetX;
+                let newTop = clientY - this.offsetY;
+
+                // Simple boundary clamping
+                newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - this.element.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, window.innerHeight - this.element.offsetHeight - 50));
+
+                this.element.style.left = `${newLeft}px`;
+                this.element.style.top = `${newTop}px`;
+                
+                this.restoreData.left = newLeft;
+                this.restoreData.top = newTop;
+            }
+
+            endDrag() {
+                this.isDragging = false;
+                // Remove global event listeners
+                document.removeEventListener('mousemove', this.dragHandler);
+                document.removeEventListener('mouseup', this.endDragHandler);
+                document.removeEventListener('touchmove', this.dragHandler);
+                document.removeEventListener('touchend', this.endDragHandler);
+            }
+
+            focus() {
+                if (this.isMinimized) this.restore();
+                
+                const windows = document.querySelectorAll('.vudu-window');
+                windows.forEach(win => {
+                    win.style.zIndex = '10';
+                    win.classList.remove('active');
+                });
+                this.element.style.zIndex = '20';
+                this.element.classList.add('active');
+            }
+
+            minimize() {
+                this.element.classList.add('minimized');
+                this.isMinimized = true;
+                vuduOS.updateTaskbar();
+            }
+
+            restore() {
+                this.element.classList.remove('minimized');
+                this.element.classList.remove('maximized');
+                this.isMinimized = false;
+                this.isMaximized = false;
+                
+                // Restore size and position from saved data
+                this.element.style.width = `${this.restoreData.width}px`;
+                this.element.style.height = `${this.restoreData.height}px`;
+                this.element.style.top = `${this.restoreData.top}px`;
+                this.element.style.left = `${this.restoreData.left}px`;
+                
+                this.focus();
+                vuduOS.updateTaskbar();
+            }
+
+            maximize() {
+                if (this.isMaximized) {
+                    this.restore();
+                    return;
+                }
+                
+                // Save current non-maximized state before maximizing
+                this.restoreData.width = this.element.offsetWidth;
+                this.restoreData.height = this.element.offsetHeight;
+                this.restoreData.top = this.element.offsetTop;
+                this.restoreData.left = this.element.offsetLeft;
+
+                this.element.classList.add('maximized');
+                this.element.classList.remove('minimized');
+                this.isMaximized = true;
+                this.isMinimized = false;
+                this.focus();
+                vuduOS.updateTaskbar();
+            }
+
+            close() {
+                this.element.remove();
+                vuduOS.closeApp(this.id);
+            }
+        }
+
+        /**
+         * VuduFS Class: Unified Storage Abstraction Layer (Stubs for Worker Integration)
+         */
+        class VuduFS {
+            static get API_ENDPOINT() { return '/api/storage'; }
+
+            /** Placeholder Stub: Fetches directory contents from the Cloudflare Worker backend. */
+            static async fetchDirectory(path) {
+                console.log(`[VuduFS STUB] Fetching directory: ${path} from https://${vuduOS.workerUrl}${VuduFS.API_ENDPOINT}`);
+                
+                // Simulate network latency and data retrieval
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                return [
+                    { name: 'Documents', type: 'folder', icon: 'fas fa-folder' },
+                    { name: 'AI_Generated_Report.pdf', type: 'file', icon: 'fas fa-file-pdf' },
+                    { name: 'vudu_Model_Config.json', type: 'file', icon: 'fas fa-file-code' },
+                    { name: 'Local Cache', type: 'folder', icon: 'fas fa-hdd' },
+                    { name: 'Shared Team Drive', type: 'folder', icon: 'fas fa-users' },
+                ];
+            }
+
+            /** Placeholder Stub: Launches the browser's File System Access API for LocalDrive. */
+            static async openLocalDirectoryPicker() {
+                console.log('[VuduFS STUB] Launching File System Access API. This requires user permission.');
+                if (window.showDirectoryPicker) {
+                    try {
+                        const dirHandle = await window.showDirectoryPicker();
+                        vuduOS.showMessage('LocalDrive Access Granted', `Connected to local folder: ${dirHandle.name}`, 'success');
+                    } catch (e) {
+                        vuduOS.showMessage('LocalDrive Access Denied', 'The user declined file system access or an API error occurred.', 'error');
+                    }
+                } else {
+                    vuduOS.showMessage('LocalDrive Not Supported', 'Your browser does not fully support the File System Access API. Please use a modern browser.', 'error');
+                }
+            }
+        }
+
+        /**
+         * VuduOS Class: Manages the entire operating system state, apps, and core services.
+         */
+        class VuduOS {
+            constructor() {
+                this.workerUrl = 'vudu-api.vusumuzi-dube.workers.dev'; 
+                this.activeApps = {};
+                this.appRegistry = {
+                    'file-manager': { title: 'vuduFS Explorer', icon: 'fas fa-folder-open', color: '#50fa7b', init: this.initFileManager.bind(this), size: [650, 450] },
+                    'ai-command': { title: 'Cognito Assistant', icon: 'fas fa-robot', color: '#8be9fd', init: this.initAICommand.bind(this), size: [380, 580] },
+                    'settings': { title: 'vuduOS Settings', icon: 'fas fa-cog', color: '#ff79c6', init: this.initSettings.bind(this), size: [400, 300] }
+                };
+            }
+            
+            // Utility to calculate initial responsive width/height
+            getResponsiveSize(desktopW, desktopH) {
+                const screenW = window.innerWidth;
+                const screenH = window.innerHeight;
+                
+                let width = Math.min(desktopW, screenW * 0.9);
+                let height = Math.min(desktopH, screenH * 0.9);
+                
+                width = Math.max(300, width);
+                height = Math.max(250, height);
+                
+                return [width, height];
+            }
+
+
+            /** Placeholder Stub: Sends request to the AI Cognito Layer. */
+            async runAICognito(task, payload) {
+                console.log(`[COGNITO STUB] Sending task '${task}' to https://${this.workerUrl}/api/cognito...`);
+                
+                await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+                if (task === 'ask') {
+                    const model = payload.query.length > 50 ? 'Mistral 7B (Complex)' : 'TinyLlama (Simple)';
+                    return `Autonomous AI Response: I understood your request: "${payload.query}". This was processed efficiently using the **${model}** model, adhering to your free-tier limitations by dynamically selecting the most cost-effective solution.`;
+                }
+                return 'AI Response Stub.';
+            }
+
+            async checkAPIStatus() {
+                const dot = document.getElementById('api-status-dot');
+                const text = document.getElementById('api-status-text');
+                
+                dot.style.backgroundColor = '#ffbd2e'; 
+                text.textContent = 'Checking API...';
+
+                try {
+                    const response = await fetch(`https://${this.workerUrl}/api/status`); 
+                    if (response.ok) {
+                        const data = await response.json();
+                        dot.style.backgroundColor = '#27c93f'; 
+                        text.textContent = `API Connected (${data.status || 'OK'})`;
+                    } else {
+                        throw new Error('API response not OK');
+                    }
+                } catch (error) {
+                    console.error('API connection failed:', error);
+                    dot.style.backgroundColor = '#ff5f56'; 
+                    text.textContent = 'API Disconnected';
+                }
+            }
+
+            openApp(id) {
+                document.getElementById('app-drawer').style.display = 'none';
+
+                if (this.activeApps[id]) {
+                    this.activeApps[id].focus();
+                    return;
+                }
+                
+                const appInfo = this.appRegistry[id];
+                if (!appInfo) return console.error(`App ${id} not found.`);
+
+                const [responsiveW, responsiveH] = this.getResponsiveSize(appInfo.size[0], appInfo.size[1]);
+                const win = new Window(id, appInfo.title, responsiveW, responsiveH);
+
+                this.activeApps[id] = win;
+                appInfo.init(win);
+                this.updateTaskbar();
+            }
+
+            closeApp(id) {
+                delete this.activeApps[id];
+                this.updateTaskbar();
+            }
+
+            updateTaskbar() {
+                const activeAppsDock = document.getElementById('active-apps');
+                activeAppsDock.innerHTML = '';
+                for (const id in this.activeApps) {
+                    const appInfo = this.appRegistry[id];
+                    const win = this.activeApps[id];
+                    
+                    const icon = document.createElement('div');
+                    icon.className = 'taskbar-icon';
+                    icon.style.color = appInfo.color;
+                    icon.innerHTML = `<i class="${appInfo.icon}"></i>`;
+                    icon.title = appInfo.title;
+                    
+                    if (win.isMinimized) {
+                        icon.style.background = 'rgba(255, 255, 255, 0.05)';
+                    } else {
+                        icon.style.background = 'transparent';
+                    }
+                    
+                    icon.onclick = () => win.focus();
+                    activeAppsDock.appendChild(icon);
+                }
+            }
+
+            toggleStartMenu() {
+                const drawer = document.getElementById('app-drawer');
+                if (drawer.style.display === 'flex') {
+                    drawer.style.display = 'none';
+                } else {
+                    drawer.style.display = 'flex';
+                    this.populateAppDrawer();
+                }
+            }
+
+            populateAppDrawer() {
+                const drawer = document.getElementById('app-drawer');
+                drawer.innerHTML = '';
+                
+                for (const id in this.appRegistry) {
+                    const appInfo = this.appRegistry[id];
+                    const icon = document.createElement('div');
+                    icon.className = 'drawer-icon';
+                    icon.innerHTML = `<i class="${appInfo.icon}" style="color: ${appInfo.color};"></i><span>${appInfo.title}</span>`;
+                    icon.onclick = () => this.openApp(id);
+                    drawer.appendChild(icon);
+                }
+            }
+
+            showMessage(title, message, type = 'info') {
+                console.log(`[vuduOS System Message | ${type.toUpperCase()}] ${title}: ${message}`);
+            }
+            
+            // --- Application Initializers ---
+
+            initFileManager(win) {
+                const content = document.getElementById(`content-${win.id}`);
+                content.innerHTML = `
+                    <div class="file-manager-layout">
+                        <div class="file-manager-sidebar">
+                            <h3>Locations</h3>
+                            <div class="fs-nav-item" data-path="/vuduDrive"><i class="fas fa-cloud" style="color:#00bcd4;"></i>vuduDrive (Cloud)</div>
+                            <div class="fs-nav-item local" onclick="VuduFS.openLocalDirectoryPicker()" data-path="/LocalDrive"><i class="fas fa-laptop-code"></i>LocalDrive (PWA)</div>
+                            <div class="fs-nav-item nas" data-path="/NASLink"><i class="fas fa-network-wired"></i>NASLink (Tunnel)</div>
+                        </div>
+                        <div class="file-manager-main" id="fm-main-${win.id}">
+                            <h4>Directory: /vuduDrive</h4>
+                            <p style="font-size:0.8rem; opacity:0.7;">Fetching directory contents via /api/storage...</p>
+                        </div>
+                    </div>
+                `;
+                // Mock data load
+                VuduFS.fetchDirectory('/vuduDrive').then(files => {
+                    const main = document.getElementById(`fm-main-${win.id}`);
+                    main.innerHTML = `<h4>Directory: /vuduDrive</h4>`;
+                    files.forEach(file => {
+                        main.innerHTML += `<div class="file-item"><i class="${file.icon}" style="margin-right: 5px;"></i>${file.name}</div>`;
+                    });
+                });
+            }
+
+            initAICommand(win) {
+                const content = document.getElementById(`content-${win.id}`);
+                content.classList.add('ai-chat-area');
+                content.style.padding = '0';
+                content.innerHTML = `
+                    <div class="chat-log" id="chat-log-${win.id}">
+                        <div class="chat-message ai-message">Welcome to the Cognito Assistant. How can I leverage the Workers AI to assist you today? Try a long question!</div>
+                    </div>
+                    <div class="ai-input-container">
+                        <input type="text" id="ai-input-${win.id}" placeholder="Ask a command or query...">
+                        <button id="ai-send-btn-${win.id}" onclick="vuduOS.submitAIChat('${win.id}')">Send</button>
+                    </div>
+                `;
+
+                document.getElementById(`ai-input-${win.id}`).addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        vuduOS.submitAIChat(win.id);
+                    }
+                });
+            }
+
+            async submitAIChat(winId) {
+                const input = document.getElementById(`ai-input-${winId}`);
+                const sendBtn = document.getElementById(`ai-send-btn-${winId}`);
+                const query = input.value.trim();
+                if (!query) return;
+
+                const chatLog = document.getElementById(`chat-log-${winId}`);
+
+                // 1. Display user message and disable input
+                chatLog.innerHTML += `<div class="chat-message user-message">${query}</div>`;
+                input.value = '';
+                chatLog.scrollTop = chatLog.scrollHeight;
+                input.disabled = true; 
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Thinking...';
+
+                // 2. Call AI Stub
+                const response = await this.runAICognito('ask', { query: query });
+                input.disabled = false;
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send';
+
+                // 3. Display AI response
+                chatLog.innerHTML += `<div class="chat-message ai-message">${response}</div>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+                input.focus();
+            }
+            
+            initSettings(win) {
+                const content = document.getElementById(`content-${win.id}`);
+                content.innerHTML = `
+                    <h3>vuduOS System Configuration</h3>
+                    <p>OS Version: 1.0 (Enterprise AI SaaS 3.0 Ready)</p>
+                    <p>Deployment: Cloudflare Pages (Free Tier Compliant)</p>
+                    <hr style="margin: 10px 0; border-color: rgba(255, 255, 255, 0.1);">
+                    <p><strong>Worker URL:</strong> <code>https://${this.workerUrl}</code></p>
+                    <p><strong>AI Gateway:</strong> <code>/api/cognito</code> (Seamless Model Switching)</p>
+                    <p><strong>Storage API:</strong> <code>/api/storage</code> (Unified File System)</p>
+                    <button style="padding: 10px; border-radius: 8px; background: var(--color-primary); color: white; margin-top: 15px; cursor: pointer;" onclick="vuduOS.checkAPIStatus()">Re-check API Status</button>
+                `;
+            }
+        }
+
+        // --- OS INITIALIZATION ---
+        let vuduOS;
+
+        window.onload = function() {
+            vuduOS = new VuduOS();
+
+            // Set up system time display
+            function updateTime() {
+                const now = new Date();
+                document.getElementById('system-time').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            setInterval(updateTime, 1000);
+            updateTime();
+
+            // Check initial API status
+            vuduOS.checkAPIStatus();
+
+            // Open initial apps with responsive sizes
+            vuduOS.openApp('file-manager');
+            vuduOS.openApp('ai-command');
+            
+            // Re-render windows on resize for mobile optimization
+            window.addEventListener('resize', () => {
+                // Adjust windows that are not maximized
+                for (const id in vuduOS.activeApps) {
+                    const win = vuduOS.activeApps[id];
+                    if (!win.isMaximized) {
+                        const appInfo = vuduOS.appRegistry[id];
+                        const [newW, newH] = vuduOS.getResponsiveSize(appInfo.size[0], appInfo.size[1]);
+                        win.resizeAndPosition(newW, newH);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+```
+
