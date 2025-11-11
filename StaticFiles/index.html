@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vudu OS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1"/>
+</head>
+<body>
+    <div id="app">
+        <!-- Desktop Area -->
+        <div class="desktop">
+            <div class="window glass-effect" id="main-window">
+                <div class="title-bar draggable">
+                    <div class="title-bar-text">vudu OS File Explorer</div>
+                    <div class="title-bar-controls">
+                        <button aria-label="Minimize"></button>
+                        <button aria-label="Maximize"></button>
+                        <button aria-label="Close"></button>
+                    </div>
+                </div>
+                <div class="window-body">
+                    <p>Welcome to vudu OS.</p>
+                    <p>Backend API Status: <span id="api-status">Checking...</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div class="taskbar glass-effect">
+            <div class="start-button" id="start-button">Start</div>
+            <div class="system-tray">
+                <span id="clock">--:--</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
