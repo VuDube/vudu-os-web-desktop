@@ -1,7 +1,7 @@
 // vudu OS Core Functionality
 class VuduOS {
     constructor() {
-        this.workerUrl = 'https://vudu-api.your-subdomain.workers.dev'; // Replace with your actual Worker URL
+        this.workerUrl = 'vudu-api.vusumuzi-dube.workers.dev'; // Replace with your actual Worker URL
         this.init();
     }
 
